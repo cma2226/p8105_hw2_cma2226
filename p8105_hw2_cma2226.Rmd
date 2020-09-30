@@ -5,26 +5,173 @@ date: "9/27/2020"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+## **Problem 1**
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
 ```
 
-## R Markdown
+### **Problem 2**
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+First I will read and clean in the transit data file. 
+```{r setup, warning = FALSE, message = FALSE}
+library(readr)
+library(tidyverse)
+transit = 
+  read_csv("./problem_1&2_datasets/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>%
+  #clean variable names
+  janitor::clean_names() %>%
+  #select desired data elements
+  select(line, station_name, station_location, starts_with("route"), entry, vending, entrance_type, ada) %>%
+  #convert entry variable from character to logical variable
+  mutate(entry = as.logical(recode(entry, "YES" = "TRUE", "NO" = "FALSE")))
 ```
 
-## Including Plots
+This dataset contains information related to the New York City subway routes and stations. Important data elements include subway lines, location, routes, entrance type and ADA compliance for each listed subway station. There are a total of `r nrow(transit)` rows and `r ncol(transit)` columns in the transit dataset.
 
-You can also embed plots, for example:
+In my above code chunk, I first standardized my variables to have lower snake case naming convention. I then selected the desired data elements: line, station name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance variables. Lastly, I converted the entry variable from a character variable to a logical variable. We can verify that the entry variable is logical using the following code:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r logical, warning = FALSE, message = FALSE}
+typeof(transit$entry)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Now I will determine the number of distinct stations using the distinct function, which removes duplicate rows in a dataframe. 
+
+```{r distinct_stations, warning = FALSE, message = FALSE}
+nrow(distinct(transit))
+```
+
+Now I will determine the number of ADA compliant stations.
+
+```{r ada, warning = FALSE, message = FALSE}
+nrow(distinct(filter(transit, ada == FALSE)))
+```
+
+What proportion of station entrances/exits without vending allow entrance? 
+
+```{r prop_vending, warning = FALSE, message = FALSE}
+vend.table = table(pull(filter(distinct(transit), vending == "NO"), entry))
+prop.table(vend.table)
+```
+
+How many distinct stations serve the A train? Of those that serve the A train, how many are ADA compliant? 
+
+First I will reformat data so that route number and route name are distinct variables. 
+
+```{r pivot_longer, warning = FALSE, message = FALSE}
+transit = 
+  #convert all route variables to characters in order to facilitate reformatting using pivot_longer
+  mutate(transit, route8 = as.character(route8), route9 = as.character(route9),
+         route10 = as.character(route10), route11 = as.character(route11)) %>%
+  #reformat data such that route number is in one column and train is in another
+  pivot_longer(
+    cols = route1:route11,
+    names_to = "route", 
+    values_to = "train") %>%
+  mutate(route = recode(route, "route1" = "1", "route2" = "2", "route3" = "3",
+                            "route4" = "4", "route5" = "5", "route6" = "6", "route7" = "7",
+                            "route8" = "8", "route9" = "9", "route10" = "10", "route11" = "11"))
+#determine the number of distinct stations that serve the A train
+nrow(distinct(filter(transit, train == "A")))
+#determine the number of ADA compliant stations that serve the A train
+A_train = distinct(filter(transit, train == "A"))
+nrow(filter(A_train, ada == "TRUE"))
+```
+
+There are `r nrow(distinct(filter(transit, train == "A")))` distinct stations that serve the A train. There are `r nrow(filter(A_train, ada == "TRUE"))` ADA compliant stations that serve the A train. 
+
+### **Problem 3**
+
+Now I will load in a different dataset (pols-month.csv) that contains information on the political party breakdown of president, senator, representative and governor positions within the United States from 1947 to 2015. 
+
+First, I will clean the data. I will use the separate() function to break up the variable mon into integer variables year, month, and day. I will replace month number with month name. I will also create a new variable called president which will take values gop and dem and replace columns prez_dem and prez_gop. Lastly, I will remove the day variable.
+
+Because ultimately we are interested in merging this dataset with other datasets, I will arrange this dataset according to year and month, and organize such that year and month are the leading columns. This formatting is for consistency purposes and will be used in all subsequent datasets introduced in this problem. 
+
+```{r clean pols-month data, warning = FALSE, message = FALSE}
+pols = 
+  read_csv("./fivethirtyeight_datasets/pols-month.csv") %>%
+  #clean and standardize variable naming convention
+  janitor::clean_names() %>%
+  #break up mon variable into integer variables year, month and day
+  separate(mon, c("year", "month", "day")) %>%
+  mutate(year = as.integer(year), month = as.integer(month), day = as.integer(day)) %>%
+  #arrange dataset according to year and month
+  arrange(year, month) %>%
+  #change month numbers to month names
+  mutate(month = month.name[month]) %>%
+  #create a president variable taking values gop and dem, and remove prez_dem and prez_gop variables
+  pivot_longer(
+    cols = starts_with("prez"),
+    names_to = "president", 
+    values_to = "num") %>%
+  mutate(president = recode(president, "prez_gop" = "gop", "prez_dem" = "dem")) %>%
+  #remove extraneous num field generated using pivot_longer and day variable
+  select(-num, -day) %>%
+  #ensure columns year and month are listed first
+  select(year, month, everything())
+#display table of first 10 rows to show cleaned dataset
+head(pols, 10)
+```
+
+Now I will clean the data in snp.csv using a similar process to the above. For consistency across datasets, I will also arrange this datasets according to year and month, and organize it such that year and month are the leading columns.
+
+```{r clean snp data, warning = FALSE, message = FALSE}
+snp = 
+  read_csv("./fivethirtyeight_datasets/snp.csv") %>%
+  #clean and standardize variable naming convention
+  janitor::clean_names() %>%
+  #break up date variable into integer variables year, month and day
+  separate(date, c("month", "day", "year")) %>%
+  mutate(year = as.integer(year), month = as.integer(month), day = as.integer(day)) %>%
+  #arrange dataset according to year and month
+  arrange(year, month) %>%
+  #change month numbers to month names
+  mutate(month = month.name[as.numeric(month)]) %>%
+  #drop the day variable
+  select(-day) %>%
+  #ensure year and month are leading columns
+  select(year, month, everything())
+#display table of first 10 rows to show cleaned dataset
+head(snp, 10)
+```
+
+
+Now I will load in and clean my third and final dataset, unemployment. 
+```{r clean unemployment data, warning = FALSE, message = FALSE}
+unempl =
+  read_csv("./fivethirtyeight_datasets/unemployment.csv") %>%
+  #clean and standardize variable naming convention
+  janitor::clean_names() %>%
+  #create a month variable and switch from "wide" to "long" format to be consistent with other datasets
+  pivot_longer(
+    cols = jan:dec,
+    names_to = "month", 
+    values_to = "unemployment") %>%
+  #change month naming mechanism to be consistent with other datasets
+  mutate(month = recode(month, 
+    "jan" = "January", "feb" = "February", "mar" = "March", "apr" = "April", "may" = "May",
+    "jun" = "June", "jul" = "July", "aug" = "August", "sep" = "September", "oct" = "October",
+    "nov" = "November", "dec" = "December"))
+#display table of first 10 rows to show cleaned dataset
+head(unempl, 10)
+```
+
+Now that my data files have been cleaned, I will merge them, beginning with the pols and snp datasets.
+
+```{r merge_pols_snp, warning = FALSE, message = FALSE}
+pols_snp = merge(pols, snp, by = c("year", "month"))
+#display table of first 10 rows to show merged dataset
+head(pols_snp, 10)
+```
+
+Now I will merge the unemployment dataset in as well.
+```{r merge_unempl, warning = FALSE, message = FALSE}
+fin_merge = merge(pols_snp, unempl, by = c("year", "month"))
+#display table of first 10 rows to show merged dataset
+head(fin_merge, 10)
+```
+
+The final merged dataset, containing data from the pols, snp and unempl datasets, has `r nrow(fin_merge)` rows and `r ncol(fin_merge)` columns. It contains monthly political party breakdowns for elected US government positions, including president, senator, representative and governor positions, from 1947 to 2015. This data was pulled from the pols dataset.
+
+The final merged dataset also includes monthly unemployment rates from the unempl datset, and S&P stock index closing values from the snp dataset. Like the party breakdown data, these data are reported monthly from 1947 to 2015.  
