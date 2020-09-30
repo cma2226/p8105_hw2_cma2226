@@ -7,9 +7,87 @@ output: html_document
 
 ## **Problem 1**
 
+I will load the required packages for the three homework problems. 
 ```{r, warning = FALSE, message = FALSE}
 library(tidyverse)
+library(readxl)
 ```
+
+In this problem I will be using the Mr. Trash Wheel dataset. I will begin by reading in and cleaning the dataset. 
+```{r read_in, warning = FALSE, message = FALSE}
+trashwheel_df =
+  read_xlsx(
+    "./problem_1&2_datasets/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
+    sheet = "Mr. Trash Wheel",
+    range = cell_cols("A:N")) %>%
+#clean variable names
+  janitor::clean_names() %>%
+#drop NAs
+  drop_na(dumpster) %>%
+#round and make sports_balls variable an integer
+  mutate(
+    sports_balls = round(sports_balls),
+    sports_balls = as.integer(sports_balls) 
+  )
+```
+
+Now I will read and clean the precipitation data for 2018 and 2017 from other sheets within the same excel file. I will clean the names, skip the first row, drop NA's in the month variable, create a year variable, and relocate year to the first column.  
+```{r precip, warning = FALSE, message = FALSE}
+precip_2018 =
+  read_excel(
+      "./problem_1&2_datasets/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+      sheet = "2018 Precipitation",
+      skip = 1
+  ) %>%
+  #clean variable names
+  janitor::clean_names() %>%
+  #Drop NAs in the month column
+  drop_na(month) %>%
+  #create a year variable to denote 2018 data
+  mutate(year = 2018) %>%
+  #move year variable to the first column
+  relocate(year)
+
+precip_2017 =
+  read_excel(
+      "./problem_1&2_datasets/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
+      sheet = "2017 Precipitation",
+      skip = 1
+  ) %>%
+  #clean variable names
+  janitor::clean_names() %>%
+  #drop NAs in the month variable
+  drop_na(month) %>%
+  #create a year variable to denote 2018 data
+  mutate(year = 2017) %>%
+  #move year variable to the first column
+  relocate(year)
+```
+
+Now combine 2017 and 2018 annual precipitation datasets
+```{r bind_rows, warning = FALSE, message = FALSE}
+precip_df =
+  # use bind rows to add datasets together
+  bind_rows(precip_2018, precip_2017) %>%
+  #change month number to month name
+   mutate(month = recode(month, "1" = "January", "2" = "February", "3" = "March", "4" = "April", "5" = "May", "6" = "June", "7" = "July", "8" = "August", "9" = "September", "10" = "October", "11" = "November", "12" = "December"))
+```
+
+In summary, the trashwheel dataset contains information from the Mr. Trash Wheel trash collector based in Baltimore Maryland. The trashwheel collects trash as it enters the inner harbor and stores it in a dumpster. The dataset contains information on the volume and type of trash collected by year and month. There are a total of `r nrow(trashwheel_df)` rows and `r ncol(trashwheel_df)` columns in our final trashwheel dataset. Key variables in the final trashwheel dataset include month, year, weight (tons), volume (cubic yards), number of sports balls, and quantity measures of other specific types of trash. 
+
+We can calculate the median number of sports balls found per month in 2017, and the total number of sports balls found in 2017 as follows:
+```{r sports_balls, warning = FALSE, message = FALSE}
+trash_2017 = filter(trashwheel_df, year == "2017")
+median(pull(trash_2017, sports_balls))
+sum(pull(trash_2017, sports_balls))
+```
+
+The final merged precipitation dataset contains monthly precipitation measurements for 2017 and 2018. There are a total of `r nrow(precip_df)` rows and `r ncol(precip_df)` columns in this dataset. Key variables include month, year, and total precipitation. We can calculate total precipitation in 2018 as follows: 
+```{r precipitation_2018, warning = FALSE, message = FALSE}
+precip_2018 = filter(precip_df, year == "2018")
+sum(pull(precip_2018, total))
+```
+
 
 ### **Problem 2**
 
@@ -30,25 +108,21 @@ transit =
 This dataset contains information related to the New York City subway routes and stations. Important data elements include subway lines, location, routes, entrance type and ADA compliance for each listed subway station. There are a total of `r nrow(transit)` rows and `r ncol(transit)` columns in the transit dataset.
 
 In my above code chunk, I first standardized my variables to have lower snake case naming convention. I then selected the desired data elements: line, station name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance variables. Lastly, I converted the entry variable from a character variable to a logical variable. We can verify that the entry variable is logical using the following code:
-
 ```{r logical, warning = FALSE, message = FALSE}
 typeof(transit$entry)
 ```
 
 Now I will determine the number of distinct stations using the distinct function, which removes duplicate rows in a dataframe. 
-
 ```{r distinct_stations, warning = FALSE, message = FALSE}
 nrow(distinct(transit))
 ```
 
 Now I will determine the number of ADA compliant stations.
-
 ```{r ada, warning = FALSE, message = FALSE}
 nrow(distinct(filter(transit, ada == FALSE)))
 ```
 
 What proportion of station entrances/exits without vending allow entrance? 
-
 ```{r prop_vending, warning = FALSE, message = FALSE}
 vend.table = table(pull(filter(distinct(transit), vending == "NO"), entry))
 prop.table(vend.table)
@@ -57,7 +131,6 @@ prop.table(vend.table)
 How many distinct stations serve the A train? Of those that serve the A train, how many are ADA compliant? 
 
 First I will reformat data so that route number and route name are distinct variables. 
-
 ```{r pivot_longer, warning = FALSE, message = FALSE}
 transit = 
   #convert all route variables to characters in order to facilitate reformatting using pivot_longer
@@ -68,9 +141,7 @@ transit =
     cols = route1:route11,
     names_to = "route", 
     values_to = "train") %>%
-  mutate(route = recode(route, "route1" = "1", "route2" = "2", "route3" = "3",
-                            "route4" = "4", "route5" = "5", "route6" = "6", "route7" = "7",
-                            "route8" = "8", "route9" = "9", "route10" = "10", "route11" = "11"))
+  mutate(route = recode(route, "route1" = "1", "route2" = "2", "route3" = "3", "route4" = "4", "route5" = "5", "route6" = "6", "route7" = "7", "route8" = "8", "route9" = "9", "route10" = "10", "route11" = "11"))
 #determine the number of distinct stations that serve the A train
 nrow(distinct(filter(transit, train == "A")))
 #determine the number of ADA compliant stations that serve the A train
@@ -87,7 +158,6 @@ Now I will load in a different dataset (pols-month.csv) that contains informatio
 First, I will clean the data. I will use the separate() function to break up the variable mon into integer variables year, month, and day. I will replace month number with month name. I will also create a new variable called president which will take values gop and dem and replace columns prez_dem and prez_gop. Lastly, I will remove the day variable.
 
 Because ultimately we are interested in merging this dataset with other datasets, I will arrange this dataset according to year and month, and organize such that year and month are the leading columns. This formatting is for consistency purposes and will be used in all subsequent datasets introduced in this problem. 
-
 ```{r clean pols-month data, warning = FALSE, message = FALSE}
 pols = 
   read_csv("./fivethirtyeight_datasets/pols-month.csv") %>%
@@ -99,7 +169,7 @@ pols =
   #arrange dataset according to year and month
   arrange(year, month) %>%
   #change month numbers to month names
-  mutate(month = month.name[month]) %>%
+  mutate(month = recode(month, "1" = "January", "2" = "February", "3" = "March", "4" = "April", "5" = "May", "6" = "June", "7" = "July", "8" = "August", "9" = "September", "10" = "October", "11" = "November", "12" = "December")) %>%
   #create a president variable taking values gop and dem, and remove prez_dem and prez_gop variables
   pivot_longer(
     cols = starts_with("prez"),
@@ -115,7 +185,6 @@ head(pols, 10)
 ```
 
 Now I will clean the data in snp.csv using a similar process to the above. For consistency across datasets, I will also arrange this datasets according to year and month, and organize it such that year and month are the leading columns.
-
 ```{r clean snp data, warning = FALSE, message = FALSE}
 snp = 
   read_csv("./fivethirtyeight_datasets/snp.csv") %>%
@@ -127,7 +196,7 @@ snp =
   #arrange dataset according to year and month
   arrange(year, month) %>%
   #change month numbers to month names
-  mutate(month = month.name[as.numeric(month)]) %>%
+  mutate(month = recode(month, "1" = "January", "2" = "February", "3" = "March", "4" = "April", "5" = "May", "6" = "June", "7" = "July", "8" = "August", "9" = "September", "10" = "October", "11" = "November", "12" = "December")) %>%
   #drop the day variable
   select(-day) %>%
   #ensure year and month are leading columns
@@ -158,7 +227,6 @@ head(unempl, 10)
 ```
 
 Now that my data files have been cleaned, I will merge them, beginning with the pols and snp datasets.
-
 ```{r merge_pols_snp, warning = FALSE, message = FALSE}
 pols_snp = merge(pols, snp, by = c("year", "month"))
 #display table of first 10 rows to show merged dataset

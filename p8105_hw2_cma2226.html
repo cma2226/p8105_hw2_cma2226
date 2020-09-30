@@ -371,7 +371,71 @@ summary {
 
 <div id="problem-1" class="section level2">
 <h2><strong>Problem 1</strong></h2>
-<pre class="r"><code>library(tidyverse)</code></pre>
+<p>I will load the required packages for the three homework problems.</p>
+<pre class="r"><code>library(tidyverse)
+library(readxl)</code></pre>
+<p>In this problem I will be using the Mr. Trash Wheel dataset. I will begin by reading in and cleaning the dataset.</p>
+<pre class="r"><code>trashwheel_df =
+  read_xlsx(
+    &quot;./problem_1&amp;2_datasets/Trash-Wheel-Collection-Totals-8-6-19.xlsx&quot;,
+    sheet = &quot;Mr. Trash Wheel&quot;,
+    range = cell_cols(&quot;A:N&quot;)) %&gt;%
+#clean variable names
+  janitor::clean_names() %&gt;%
+#drop NAs
+  drop_na(dumpster) %&gt;%
+#round and make sports_balls variable an integer
+  mutate(
+    sports_balls = round(sports_balls),
+    sports_balls = as.integer(sports_balls) 
+  )</code></pre>
+<p>Now I will read and clean the precipitation data for 2018 and 2017 from other sheets within the same excel file. I will clean the names, skip the first row, drop NA’s in the month variable, create a year variable, and relocate year to the first column.</p>
+<pre class="r"><code>precip_2018 =
+  read_excel(
+      &quot;./problem_1&amp;2_datasets/Trash-Wheel-Collection-Totals-8-6-19.xlsx&quot;, 
+      sheet = &quot;2018 Precipitation&quot;,
+      skip = 1
+  ) %&gt;%
+  #clean variable names
+  janitor::clean_names() %&gt;%
+  #Drop NAs in the month column
+  drop_na(month) %&gt;%
+  #create a year variable to denote 2018 data
+  mutate(year = 2018) %&gt;%
+  #move year variable to the first column
+  relocate(year)
+
+precip_2017 =
+  read_excel(
+      &quot;./problem_1&amp;2_datasets/Trash-Wheel-Collection-Totals-8-6-19.xlsx&quot;, 
+      sheet = &quot;2017 Precipitation&quot;,
+      skip = 1
+  ) %&gt;%
+  #clean variable names
+  janitor::clean_names() %&gt;%
+  #drop NAs in the month variable
+  drop_na(month) %&gt;%
+  #create a year variable to denote 2018 data
+  mutate(year = 2017) %&gt;%
+  #move year variable to the first column
+  relocate(year)</code></pre>
+<p>Now combine 2017 and 2018 annual precipitation datasets</p>
+<pre class="r"><code>precip_df =
+  # use bind rows to add datasets together
+  bind_rows(precip_2018, precip_2017) %&gt;%
+  #change month number to month name
+   mutate(month = recode(month, &quot;1&quot; = &quot;January&quot;, &quot;2&quot; = &quot;February&quot;, &quot;3&quot; = &quot;March&quot;, &quot;4&quot; = &quot;April&quot;, &quot;5&quot; = &quot;May&quot;, &quot;6&quot; = &quot;June&quot;, &quot;7&quot; = &quot;July&quot;, &quot;8&quot; = &quot;August&quot;, &quot;9&quot; = &quot;September&quot;, &quot;10&quot; = &quot;October&quot;, &quot;11&quot; = &quot;November&quot;, &quot;12&quot; = &quot;December&quot;))</code></pre>
+<p>In summary, the trashwheel dataset contains information from the Mr. Trash Wheel trash collector based in Baltimore Maryland. The trashwheel collects trash as it enters the inner harbor and stores it in a dumpster. The dataset contains information on the volume and type of trash collected by year and month. There are a total of 344 rows and 14 columns in our final trashwheel dataset. Key variables in the final trashwheel dataset include month, year, weight (tons), volume (cubic yards), number of sports balls, and quantity measures of other specific types of trash.</p>
+<p>We can calculate the median number of sports balls found per month in 2017, and the total number of sports balls found in 2017 as follows:</p>
+<pre class="r"><code>trash_2017 = filter(trashwheel_df, year == &quot;2017&quot;)
+median(pull(trash_2017, sports_balls))</code></pre>
+<pre><code>## [1] 8</code></pre>
+<pre class="r"><code>sum(pull(trash_2017, sports_balls))</code></pre>
+<pre><code>## [1] 530</code></pre>
+<p>The final merged precipitation dataset contains monthly precipitation measurements for 2017 and 2018. There are a total of 24 rows and 3 columns in this dataset. Key variables include month, year, and total precipitation. We can calculate total precipitation in 2018 as follows:</p>
+<pre class="r"><code>precip_2018 = filter(precip_df, year == &quot;2018&quot;)
+sum(pull(precip_2018, total))</code></pre>
+<pre><code>## [1] 70.33</code></pre>
 <div id="problem-2" class="section level3">
 <h3><strong>Problem 2</strong></h3>
 <p>First I will read and clean in the transit data file.</p>
@@ -412,9 +476,7 @@ prop.table(vend.table)</code></pre>
     cols = route1:route11,
     names_to = &quot;route&quot;, 
     values_to = &quot;train&quot;) %&gt;%
-  mutate(route = recode(route, &quot;route1&quot; = &quot;1&quot;, &quot;route2&quot; = &quot;2&quot;, &quot;route3&quot; = &quot;3&quot;,
-                            &quot;route4&quot; = &quot;4&quot;, &quot;route5&quot; = &quot;5&quot;, &quot;route6&quot; = &quot;6&quot;, &quot;route7&quot; = &quot;7&quot;,
-                            &quot;route8&quot; = &quot;8&quot;, &quot;route9&quot; = &quot;9&quot;, &quot;route10&quot; = &quot;10&quot;, &quot;route11&quot; = &quot;11&quot;))
+  mutate(route = recode(route, &quot;route1&quot; = &quot;1&quot;, &quot;route2&quot; = &quot;2&quot;, &quot;route3&quot; = &quot;3&quot;, &quot;route4&quot; = &quot;4&quot;, &quot;route5&quot; = &quot;5&quot;, &quot;route6&quot; = &quot;6&quot;, &quot;route7&quot; = &quot;7&quot;, &quot;route8&quot; = &quot;8&quot;, &quot;route9&quot; = &quot;9&quot;, &quot;route10&quot; = &quot;10&quot;, &quot;route11&quot; = &quot;11&quot;))
 #determine the number of distinct stations that serve the A train
 nrow(distinct(filter(transit, train == &quot;A&quot;)))</code></pre>
 <pre><code>## [1] 91</code></pre>
@@ -426,9 +488,9 @@ nrow(filter(A_train, ada == &quot;TRUE&quot;))</code></pre>
 </div>
 <div id="problem-3" class="section level3">
 <h3><strong>Problem 3</strong></h3>
-<p>Now I will load in a different dataset from pols-month.csv that contains information on the political party breakdown of president, senator, representative and governor positions within the United States from 1947 to 2015.</p>
+<p>Now I will load in a different dataset (pols-month.csv) that contains information on the political party breakdown of president, senator, representative and governor positions within the United States from 1947 to 2015.</p>
 <p>First, I will clean the data. I will use the separate() function to break up the variable mon into integer variables year, month, and day. I will replace month number with month name. I will also create a new variable called president which will take values gop and dem and replace columns prez_dem and prez_gop. Lastly, I will remove the day variable.</p>
-<p>Because ultimately we are interested in merging this dataset with other datasets, I will arrange this dataset according to year and month, and organize so that year and month are the leading columns. This formatting is for consistency purposes and will be used in all subsequent datasets introduced in this problem.</p>
+<p>Because ultimately we are interested in merging this dataset with other datasets, I will arrange this dataset according to year and month, and organize such that year and month are the leading columns. This formatting is for consistency purposes and will be used in all subsequent datasets introduced in this problem.</p>
 <pre class="r"><code>pols = 
   read_csv(&quot;./fivethirtyeight_datasets/pols-month.csv&quot;) %&gt;%
   #clean and standardize variable naming convention
@@ -439,7 +501,7 @@ nrow(filter(A_train, ada == &quot;TRUE&quot;))</code></pre>
   #arrange dataset according to year and month
   arrange(year, month) %&gt;%
   #change month numbers to month names
-  mutate(month = month.name[month]) %&gt;%
+  mutate(month = recode(month, &quot;1&quot; = &quot;January&quot;, &quot;2&quot; = &quot;February&quot;, &quot;3&quot; = &quot;March&quot;, &quot;4&quot; = &quot;April&quot;, &quot;5&quot; = &quot;May&quot;, &quot;6&quot; = &quot;June&quot;, &quot;7&quot; = &quot;July&quot;, &quot;8&quot; = &quot;August&quot;, &quot;9&quot; = &quot;September&quot;, &quot;10&quot; = &quot;October&quot;, &quot;11&quot; = &quot;November&quot;, &quot;12&quot; = &quot;December&quot;)) %&gt;%
   #create a president variable taking values gop and dem, and remove prez_dem and prez_gop variables
   pivot_longer(
     cols = starts_with(&quot;prez&quot;),
@@ -465,17 +527,18 @@ head(pols, 10)</code></pre>
 ##  8  1947 April         23      51     253      23      45     198 dem      
 ##  9  1947 May           23      51     253      23      45     198 gop      
 ## 10  1947 May           23      51     253      23      45     198 dem</code></pre>
-<p>Now I will clean the data in snp.csv using a similar process to the above. For consistency across datasets, I will also arrange this datasets according to year and month, and organize it so that year and month are the leading columns.</p>
+<p>Now I will clean the data in snp.csv using a similar process to the above. For consistency across datasets, I will also arrange this datasets according to year and month, and organize it such that year and month are the leading columns.</p>
 <pre class="r"><code>snp = 
   read_csv(&quot;./fivethirtyeight_datasets/snp.csv&quot;) %&gt;%
   #clean and standardize variable naming convention
   janitor::clean_names() %&gt;%
   #break up date variable into integer variables year, month and day
   separate(date, c(&quot;month&quot;, &quot;day&quot;, &quot;year&quot;)) %&gt;%
+  mutate(year = as.integer(year), month = as.integer(month), day = as.integer(day)) %&gt;%
   #arrange dataset according to year and month
   arrange(year, month) %&gt;%
   #change month numbers to month names
-  mutate(month = month.name[as.numeric(month)]) %&gt;%
+  mutate(month = recode(month, &quot;1&quot; = &quot;January&quot;, &quot;2&quot; = &quot;February&quot;, &quot;3&quot; = &quot;March&quot;, &quot;4&quot; = &quot;April&quot;, &quot;5&quot; = &quot;May&quot;, &quot;6&quot; = &quot;June&quot;, &quot;7&quot; = &quot;July&quot;, &quot;8&quot; = &quot;August&quot;, &quot;9&quot; = &quot;September&quot;, &quot;10&quot; = &quot;October&quot;, &quot;11&quot; = &quot;November&quot;, &quot;12&quot; = &quot;December&quot;)) %&gt;%
   #drop the day variable
   select(-day) %&gt;%
   #ensure year and month are leading columns
@@ -483,18 +546,18 @@ head(pols, 10)</code></pre>
 #display table of first 10 rows to show cleaned dataset
 head(snp, 10)</code></pre>
 <pre><code>## # A tibble: 10 x 3
-##    year  month    close
-##    &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;
-##  1 1950  January   17.0
-##  2 1950  October   19.5
-##  3 1950  November  19.5
-##  4 1950  December  20.4
-##  5 1950  February  17.2
-##  6 1950  March     17.3
-##  7 1950  April     18.0
-##  8 1950  May       18.8
-##  9 1950  June      17.7
-## 10 1950  July      17.8</code></pre>
+##     year month     close
+##    &lt;int&gt; &lt;chr&gt;     &lt;dbl&gt;
+##  1  1950 January    17.0
+##  2  1950 February   17.2
+##  3  1950 March      17.3
+##  4  1950 April      18.0
+##  5  1950 May        18.8
+##  6  1950 June       17.7
+##  7  1950 July       17.8
+##  8  1950 August     18.4
+##  9  1950 September  19.5
+## 10  1950 October    19.5</code></pre>
 <p>Now I will load in and clean my third and final dataset, unemployment.</p>
 <pre class="r"><code>unempl =
   read_csv(&quot;./fivethirtyeight_datasets/unemployment.csv&quot;) %&gt;%
@@ -577,7 +640,6 @@ head(fin_merge, 10)</code></pre>
 ## 8  17.22          6.4
 ## 9  17.05          6.5
 ## 10 17.05          6.5</code></pre>
-<p>Write a short paragraph about these datasets. Explain briefly what each dataset contained, and describe the resulting dataset (e.g. give the dimension, range of years, and names of key variables).</p>
 <p>The final merged dataset, containing data from the pols, snp and unempl datasets, has 1572 rows and 11 columns. It contains monthly political party breakdowns for elected US government positions, including president, senator, representative and governor positions, from 1947 to 2015. This data was pulled from the pols dataset.</p>
 <p>The final merged dataset also includes monthly unemployment rates from the unempl datset, and S&amp;P stock index closing values from the snp dataset. Like the party breakdown data, these data are reported monthly from 1947 to 2015.</p>
 </div>
