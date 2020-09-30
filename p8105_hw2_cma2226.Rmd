@@ -2,7 +2,7 @@
 title: "Data Science Homework 2"
 author: "Caroline Andy"
 date: "9/27/2020"
-output: git_document
+output: github_document
 ---
 
 ## **Problem 1**
