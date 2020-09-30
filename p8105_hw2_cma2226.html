@@ -388,7 +388,24 @@ library(readxl)</code></pre>
   mutate(
     sports_balls = round(sports_balls),
     sports_balls = as.integer(sports_balls) 
-  )</code></pre>
+  )
+head(trashwheel_df, 10)</code></pre>
+<pre><code>## # A tibble: 10 x 14
+##    dumpster month  year date                weight_tons volume_cubic_ya…
+##       &lt;dbl&gt; &lt;chr&gt; &lt;dbl&gt; &lt;dttm&gt;                    &lt;dbl&gt;            &lt;dbl&gt;
+##  1        1 May    2014 2014-05-16 00:00:00        4.31               18
+##  2        2 May    2014 2014-05-16 00:00:00        2.74               13
+##  3        3 May    2014 2014-05-16 00:00:00        3.45               15
+##  4        4 May    2014 2014-05-17 00:00:00        3.1                15
+##  5        5 May    2014 2014-05-17 00:00:00        4.06               18
+##  6        6 May    2014 2014-05-20 00:00:00        2.71               13
+##  7        7 May    2014 2014-05-21 00:00:00        1.91                8
+##  8        8 May    2014 2014-05-28 00:00:00        3.7                16
+##  9        9 June   2014 2014-06-05 00:00:00        2.52               14
+## 10       10 June   2014 2014-06-11 00:00:00        3.76               18
+## # … with 8 more variables: plastic_bottles &lt;dbl&gt;, polystyrene &lt;dbl&gt;,
+## #   cigarette_butts &lt;dbl&gt;, glass_bottles &lt;dbl&gt;, grocery_bags &lt;dbl&gt;,
+## #   chip_bags &lt;dbl&gt;, sports_balls &lt;int&gt;, homes_powered &lt;dbl&gt;</code></pre>
 <p>Now I will read and clean the precipitation data for 2018 and 2017 from other sheets within the same excel file. I will clean the names, skip the first row, drop NA’s in the month variable, create a year variable, and relocate year to the first column.</p>
 <pre class="r"><code>precip_2018 =
   read_excel(
@@ -424,7 +441,21 @@ precip_2017 =
   # use bind rows to add datasets together
   bind_rows(precip_2018, precip_2017) %&gt;%
   #change month number to month name
-   mutate(month = recode(month, &quot;1&quot; = &quot;January&quot;, &quot;2&quot; = &quot;February&quot;, &quot;3&quot; = &quot;March&quot;, &quot;4&quot; = &quot;April&quot;, &quot;5&quot; = &quot;May&quot;, &quot;6&quot; = &quot;June&quot;, &quot;7&quot; = &quot;July&quot;, &quot;8&quot; = &quot;August&quot;, &quot;9&quot; = &quot;September&quot;, &quot;10&quot; = &quot;October&quot;, &quot;11&quot; = &quot;November&quot;, &quot;12&quot; = &quot;December&quot;))</code></pre>
+   mutate(month = recode(month, &quot;1&quot; = &quot;January&quot;, &quot;2&quot; = &quot;February&quot;, &quot;3&quot; = &quot;March&quot;, &quot;4&quot; = &quot;April&quot;, &quot;5&quot; = &quot;May&quot;, &quot;6&quot; = &quot;June&quot;, &quot;7&quot; = &quot;July&quot;, &quot;8&quot; = &quot;August&quot;, &quot;9&quot; = &quot;September&quot;, &quot;10&quot; = &quot;October&quot;, &quot;11&quot; = &quot;November&quot;, &quot;12&quot; = &quot;December&quot;))
+head(precip_df, 10)</code></pre>
+<pre><code>## # A tibble: 10 x 3
+##     year month     total
+##    &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;
+##  1  2018 January    0.94
+##  2  2018 February   4.8 
+##  3  2018 March      2.69
+##  4  2018 April      4.69
+##  5  2018 May        9.27
+##  6  2018 June       4.77
+##  7  2018 July      10.2 
+##  8  2018 August     6.45
+##  9  2018 September 10.5 
+## 10  2018 October    2.12</code></pre>
 <p>In summary, the trashwheel dataset contains information from the Mr. Trash Wheel trash collector based in Baltimore Maryland. The trashwheel collects trash as it enters the inner harbor and stores it in a dumpster. The dataset contains information on the volume and type of trash collected by year and month. There are a total of 344 rows and 14 columns in our final trashwheel dataset. Key variables in the final trashwheel dataset include month, year, weight (tons), volume (cubic yards), number of sports balls, and quantity measures of other specific types of trash.</p>
 <p>We can calculate the median number of sports balls found per month in 2017, and the total number of sports balls found in 2017 as follows:</p>
 <pre class="r"><code>trash_2017 = filter(trashwheel_df, year == &quot;2017&quot;)
@@ -448,7 +479,24 @@ transit =
   #select desired data elements
   select(line, station_name, station_location, starts_with(&quot;route&quot;), entry, vending, entrance_type, ada) %&gt;%
   #convert entry variable from character to logical variable
-  mutate(entry = as.logical(recode(entry, &quot;YES&quot; = &quot;TRUE&quot;, &quot;NO&quot; = &quot;FALSE&quot;)))</code></pre>
+  mutate(entry = as.logical(recode(entry, &quot;YES&quot; = &quot;TRUE&quot;, &quot;NO&quot; = &quot;FALSE&quot;)))
+head(transit, 10)</code></pre>
+<pre><code>## # A tibble: 10 x 18
+##    line  station_name station_location route1 route2 route3 route4 route5 route6
+##    &lt;chr&gt; &lt;chr&gt;        &lt;chr&gt;            &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt; 
+##  1 4 Av… 25th St      (40.660397, -73… R      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;  
+##  2 4 Av… 25th St      (40.660397, -73… R      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;  
+##  3 4 Av… 36th St      (40.655144, -74… N      R      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;  
+##  4 4 Av… 36th St      (40.655144, -74… N      R      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;  
+##  5 4 Av… 36th St      (40.655144, -74… N      R      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;  
+##  6 4 Av… 45th St      (40.648939, -74… R      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;  
+##  7 4 Av… 45th St      (40.648939, -74… R      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;  
+##  8 4 Av… 45th St      (40.648939, -74… R      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;  
+##  9 4 Av… 45th St      (40.648939, -74… R      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;  
+## 10 4 Av… 53rd St      (40.645069, -74… R      &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;   &lt;NA&gt;  
+## # … with 9 more variables: route7 &lt;chr&gt;, route8 &lt;dbl&gt;, route9 &lt;dbl&gt;,
+## #   route10 &lt;dbl&gt;, route11 &lt;dbl&gt;, entry &lt;lgl&gt;, vending &lt;chr&gt;,
+## #   entrance_type &lt;chr&gt;, ada &lt;lgl&gt;</code></pre>
 <p>This dataset contains information related to the New York City subway routes and stations. Important data elements include subway lines, location, routes, entrance type and ADA compliance for each listed subway station. There are a total of 1868 rows and 18 columns in the transit dataset.</p>
 <p>In my above code chunk, I first standardized my variables to have lower snake case naming convention. I then selected the desired data elements: line, station name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance variables. Lastly, I converted the entry variable from a character variable to a logical variable. We can verify that the entry variable is logical using the following code:</p>
 <pre class="r"><code>typeof(transit$entry)</code></pre>
