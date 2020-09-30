@@ -119,7 +119,7 @@ nrow(distinct(transit))
 
 Now I will determine the number of ADA compliant stations.
 ```{r ada, warning = FALSE, message = FALSE}
-nrow(distinct(filter(transit, ada == FALSE)))
+nrow(distinct(filter(transit, ada == TRUE)))
 ```
 
 What proportion of station entrances/exits without vending allow entrance? 
@@ -127,6 +127,8 @@ What proportion of station entrances/exits without vending allow entrance?
 vend.table = table(pull(filter(distinct(transit), vending == "NO"), entry))
 prop.table(vend.table)
 ```
+
+38.46% of stations without vending allow entrance.  
 
 How many distinct stations serve the A train? Of those that serve the A train, how many are ADA compliant? 
 
@@ -157,7 +159,7 @@ Now I will load in a different dataset (pols-month.csv) that contains informatio
 
 First, I will clean the data. I will use the separate() function to break up the variable mon into integer variables year, month, and day. I will replace month number with month name. I will also create a new variable called president which will take values gop and dem and replace columns prez_dem and prez_gop. Lastly, I will remove the day variable.
 
-Because ultimately we are interested in merging this dataset with other datasets, I will arrange this dataset according to year and month, and organize such that year and month are the leading columns. This formatting is for consistency purposes and will be used in all subsequent datasets introduced in this problem. 
+Because ultimately we are interested in merging this dataset with other datasets, I will arrange this dataset according to year and month, and organize the data such that year and month are the leading columns. This formatting is for consistency purposes and will be used in all subsequent datasets introduced in this problem.
 ```{r clean pols-month data, warning = FALSE, message = FALSE}
 pols = 
   read_csv("./fivethirtyeight_datasets/pols-month.csv") %>%
